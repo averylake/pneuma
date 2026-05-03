@@ -1,0 +1,593 @@
+/* ───────────────────────────────────────────
+   Pneuma — App Logic
+   Photorealistic masks in darkness
+   ─────────────────────────────────────────── */
+
+const masks = [
+  {
+    id: "family",
+    label: "Family",
+    x: "29%",
+    y: "24%",
+    dx: "0.82rem",
+    dy: "-0.98rem",
+    duration: "14s",
+    image: "assets/mask-family.png",
+    mark: "family",
+    copy: [
+      "What if your names, your lineage, your place in the family were all just costumes?",
+      "Who would you be without the story they gave you?",
+      "Try to release it for a moment.",
+      "What remains?"
+    ]
+  },
+  {
+    id: "belief",
+    label: "Belief",
+    x: "47%",
+    y: "34%",
+    dx: "-0.76rem",
+    dy: "0.82rem",
+    duration: "15.5s",
+    image: "assets/mask-belief.png",
+    mark: "belief",
+    copy: [
+      "What beliefs were handed to you before you could choose?",
+      "Which ones still shape you, even if they no longer fit?",
+      "Try to let go of all of them for a moment.",
+      "What remains if you are not your beliefs?",
+      "Who is still here?"
+    ]
+  },
+  {
+    id: "nation",
+    label: "Nation",
+    x: "68%",
+    y: "26%",
+    dx: "0.94rem",
+    dy: "0.68rem",
+    duration: "16s",
+    image: "assets/mask-nation.png",
+    mark: "nation",
+    copy: [
+      "What borders have shaped your sense of self?",
+      "What pride or shame have you carried with your flag or your papers?",
+      "If there were no country to belong to, would you still be here?",
+      "What part of you was never bound by those artificial lines?"
+    ]
+  },
+  {
+    id: "title",
+    label: "Title",
+    x: "28%",
+    y: "56%",
+    dx: "-0.72rem",
+    dy: "-0.86rem",
+    duration: "13.5s",
+    image: "assets/mask-title.png",
+    mark: "title",
+    copy: [
+      "What roles and titles have defined your worth?",
+      "What mask did you wear just to be seen or respected?",
+      "If no one knew your job, your function, your skills, who would still be standing there?",
+      "Let go of all of it. The title, the roles, the work.",
+      "Notice what remains."
+    ]
+  },
+  {
+    id: "screen",
+    label: "Screen",
+    x: "76%",
+    y: "49%",
+    dx: "0.68rem",
+    dy: "0.78rem",
+    duration: "15s",
+    image: "assets/mask-screen.png",
+    mark: "screen",
+    copy: [
+      "What part of you exists only on a screen?",
+      "What version of yourself have you edited, filtered, or performed?",
+      "If no one could see your profile, your feed, your online life, would you still feel real?",
+      "Close the screen. Let the silence speak.",
+      "What remains when no one is watching?"
+    ]
+  },
+  {
+    id: "language",
+    label: "Language",
+    x: "44%",
+    y: "70%",
+    dx: "-0.86rem",
+    dy: "-0.66rem",
+    duration: "14.5s",
+    image: "assets/mask-story.png",
+    mark: "language",
+    copy: [
+      "What language did you inherit before you knew you had inherited anything?",
+      "What words became the walls of what you could feel, name, or become?",
+      "What accent, silence, translation, or sentence taught you where you belonged?",
+      "If you set language down for a moment, what remains before the first word?"
+    ]
+  },
+  {
+    id: "emotions",
+    label: "Emotions",
+    x: "63%",
+    y: "72%",
+    dx: "0.74rem",
+    dy: "-0.8rem",
+    duration: "16.5s",
+    image: "assets/mask-emotions.png",
+    mark: "emotions",
+    copy: [
+      "What fear has followed you quietly for years?",
+      "What part of you is still shaped by that tension, that caution, that voice?",
+      "If you stopped listening to it and to every other emotion, what are you left with?"
+    ]
+  }
+];
+
+const assetVersion = "20260504-download-on-request";
+
+/* ── DOM references ──────────────────────── */
+
+const maskLayer = document.querySelector("#mask-layer");
+const reflection = document.querySelector("#reflection");
+const reflectionKicker = document.querySelector("#reflection-kicker");
+const reflectionCopy = document.querySelector("#reflection-copy");
+const releaseButton = document.querySelector("#release-button");
+const progressDots = document.querySelector("#progress-dots");
+const progressText = document.querySelector("#progress-text");
+const reveal = document.querySelector(".reveal");
+const restartButton = document.querySelector("#restart-button");
+const homeButton = document.querySelector("#home-button");
+const statementButton = document.querySelector("#statement-button");
+const artistStatement = document.querySelector("#artist-statement");
+const fogContainer = document.querySelector("#fog-container");
+const downloadHelp = document.querySelector("#download-help");
+const copyExperienceLinkButton = document.querySelector("#copy-experience-link");
+const copyLinkStatus = document.querySelector("#copy-link-status");
+const soundButton = document.querySelector("#sound-button");
+const soundtrack = document.querySelector("#soundtrack");
+const experienceUrl = "https://pneuma.averylakeofficial.com/";
+
+let activeMaskId = null;
+let soundEnabled = true;
+let soundFadeFrame = null;
+const released = new Set();
+
+/* ── Soundtrack ──────────────────────────── */
+
+function updateSoundButton() {
+  if (!soundButton) return;
+
+  const isPlaying = soundtrack && !soundtrack.paused;
+  soundButton.classList.toggle("is-muted", !soundEnabled);
+  soundButton.setAttribute("aria-pressed", String(soundEnabled));
+
+  if (!soundEnabled) {
+    soundButton.setAttribute("aria-label", "Turn sound on");
+  } else if (isPlaying) {
+    soundButton.setAttribute("aria-label", "Turn sound off");
+  } else {
+    soundButton.setAttribute("aria-label", "Start sound");
+  }
+}
+
+function fadeSoundVolume(targetVolume, duration = 1100, afterFade) {
+  if (!soundtrack) return;
+
+  if (soundFadeFrame) {
+    cancelAnimationFrame(soundFadeFrame);
+  }
+
+  const startVolume = soundtrack.volume;
+  const startTime = performance.now();
+
+  const step = (now) => {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    soundtrack.volume = startVolume + ((targetVolume - startVolume) * eased);
+
+    if (progress < 1) {
+      soundFadeFrame = requestAnimationFrame(step);
+    } else {
+      soundFadeFrame = null;
+      if (afterFade) afterFade();
+    }
+  };
+
+  soundFadeFrame = requestAnimationFrame(step);
+}
+
+async function startSound() {
+  if (!soundtrack || !soundEnabled) return;
+
+  try {
+    if (soundtrack.paused) {
+      soundtrack.volume = 0;
+      await soundtrack.play();
+    }
+    fadeSoundVolume(0.42);
+  } catch {
+    soundEnabled = false;
+  } finally {
+    updateSoundButton();
+  }
+}
+
+function stopSound() {
+  if (!soundtrack) return;
+  fadeSoundVolume(0, 650, () => {
+    soundtrack.pause();
+  });
+  updateSoundButton();
+}
+
+function toggleSound() {
+  if (!soundtrack) return;
+
+  if (!soundEnabled) {
+    soundEnabled = true;
+    startSound();
+    updateSoundButton();
+    return;
+  }
+
+  if (soundtrack.paused) {
+    startSound();
+    return;
+  }
+
+  soundEnabled = false;
+  stopSound();
+}
+
+/* ── Dust mote particles ─────────────────── */
+
+function createDustMotes() {
+  if (!fogContainer) return;
+  const count = 25;
+  for (let i = 0; i < count; i++) {
+    const mote = document.createElement("div");
+    mote.className = "dust-mote";
+    mote.style.left = `${Math.random() * 100}%`;
+    mote.style.top = `${Math.random() * 100}%`;
+    mote.style.setProperty("--mote-duration", `${15 + Math.random() * 20}s`);
+    mote.style.setProperty("--mote-delay", `${Math.random() * 15}s`);
+    mote.style.setProperty("--mote-dx", `${(Math.random() - 0.5) * 80}px`);
+    mote.style.setProperty("--mote-dy", `${-20 - Math.random() * 100}px`);
+    mote.style.width = `${1 + Math.random() * 2}px`;
+    mote.style.height = mote.style.width;
+    fogContainer.appendChild(mote);
+  }
+}
+
+/* ── Render masks ────────────────────────── */
+
+function scaleLength(length, factor) {
+  const match = String(length).trim().match(/^(-?\d*\.?\d+)([a-z%]+)$/i);
+  if (!match) return "0rem";
+
+  const value = Number(match[1]) * factor;
+  const unit = match[2];
+  const rounded = Number(value.toFixed(4));
+  return `${Object.is(rounded, -0) ? 0 : rounded}${unit}`;
+}
+
+function driftStyle(dx, dy) {
+  return [
+    `--float-x-25: ${scaleLength(dx, -0.55)}`,
+    `--float-y-25: ${scaleLength(dy, 0.55)}`,
+    `--float-x-50: ${scaleLength(dx, 1.1)}`,
+    `--float-y-50: ${scaleLength(dy, 1.1)}`,
+    `--float-x-75: ${scaleLength(dx, 0.45)}`,
+    `--float-y-75: ${scaleLength(dy, -0.75)}`
+  ].join("; ");
+}
+
+function renderMasks() {
+  maskLayer.innerHTML = masks.map((mask) => `
+    <button
+      class="mask-node"
+      type="button"
+      data-mask="${mask.id}"
+      aria-label="Open ${mask.label} mask"
+      style="--x: ${mask.x}; --y: ${mask.y}; --duration: ${mask.duration}; ${driftStyle(mask.dx, mask.dy)};"
+    >
+      <img src="${mask.image}?v=${assetVersion}" alt="${mask.label} mask" draggable="false" />
+      <span class="porcelain-surface" aria-hidden="true"><span></span></span>
+      <span class="mask-mark mask-mark--${mask.mark}" aria-hidden="true"><span></span></span>
+      <span class="mask-label-text">${mask.label}</span>
+    </button>
+  `).join("");
+
+  maskLayer.querySelectorAll(".mask-node").forEach((node) => {
+    node.addEventListener("click", () => openReflection(node.dataset.mask));
+  });
+
+  /* Stagger mask entrance */
+  maskLayer.querySelectorAll(".mask-node").forEach((node, i) => {
+    setTimeout(() => {
+      node.classList.add("is-visible");
+    }, 300 + i * 350);
+  });
+}
+
+/* ── Progress dots ───────────────────────── */
+
+function renderProgress() {
+  progressDots.innerHTML = masks.map((mask) => `
+    <span class="progress-dot ${released.has(mask.id) ? "is-done" : ""}"></span>
+  `).join("");
+  progressText.textContent = `${released.size} of ${masks.length} identities released.`;
+  document.body.style.setProperty("--release-depth", (released.size / masks.length).toFixed(3));
+}
+
+/* ── Reflection dialog ───────────────────── */
+
+function openReflection(maskId) {
+  const mask = masks.find((item) => item.id === maskId);
+  if (!mask) return;
+
+  startSound();
+  activeMaskId = maskId;
+  reflectionKicker.textContent = mask.label;
+  reflectionCopy.innerHTML = mask.copy.map((line) => `<p>${line}</p>`).join("");
+  reflection.showModal();
+}
+
+/* ── Release mask ────────────────────────── */
+
+function releaseActiveMask() {
+  if (!activeMaskId) return;
+
+  const node = maskLayer.querySelector(`[data-mask="${activeMaskId}"]`);
+  released.add(activeMaskId);
+  renderProgress();
+
+  if (reflection.open) {
+    reflection.close("release");
+  }
+
+  if (node) {
+    node.classList.add("is-releasing");
+    let releaseFinished = false;
+    const finishRelease = () => {
+      if (releaseFinished) return;
+      releaseFinished = true;
+      node.remove();
+      if (released.size === masks.length) {
+        revealEnding();
+      }
+    };
+    node.addEventListener("animationend", finishRelease, { once: true });
+    setTimeout(finishRelease, 1400);
+  } else if (released.size === masks.length) {
+    revealEnding();
+  }
+
+  activeMaskId = null;
+}
+
+/* ── Reveal ending ───────────────────────── */
+
+function revealEnding() {
+  document.body.classList.add("revealed");
+  reveal.setAttribute("aria-hidden", "false");
+}
+
+/* ── Restart ─────────────────────────────── */
+
+function restartExperiment() {
+  released.clear();
+  activeMaskId = null;
+  document.body.classList.remove("revealed");
+  reveal.setAttribute("aria-hidden", "true");
+  renderMasks();
+  renderProgress();
+}
+
+/* ── Artifact generation ─────────────────── */
+
+const artifactButton = document.querySelector("#artifact-button");
+
+function isInAppViewer() {
+  const ua = navigator.userAgent || "";
+  return /Instagram|FBAN|FBAV|FB_IAB|FB4A|FBIOS|Messenger|Line\/|Twitter|TikTok|LinkedInApp|Pinterest|Snapchat|\bwv\b/i.test(ua);
+}
+
+function showDownloadHelp() {
+  if (copyLinkStatus) {
+    copyLinkStatus.textContent = "";
+  }
+
+  if (downloadHelp && typeof downloadHelp.showModal === "function") {
+    downloadHelp.showModal();
+    return;
+  }
+
+  window.alert("The ritual works here. Only the final artifact download needs Safari, Chrome, or your system browser.");
+}
+
+async function copyExperienceLink() {
+  if (!copyLinkStatus) return;
+
+  try {
+    await navigator.clipboard.writeText(experienceUrl);
+    copyLinkStatus.textContent = "Link copied.";
+  } catch {
+    copyLinkStatus.textContent = "Copy this link: pneuma.averylakeofficial.com";
+  }
+}
+
+/**
+ * Generate a unique hash from timestamp + random bytes.
+ * Returns a short hex string like "a7f3e2b1".
+ */
+function generateHash() {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  const raw = timestamp + random;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16).padStart(8, "0").slice(0, 8);
+}
+
+function resetArtifactButton() {
+  if (!artifactButton) return;
+  artifactButton.textContent = "Download artifact";
+  artifactButton.disabled = false;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function generateArtifact() {
+  if (isInAppViewer()) {
+    showDownloadHelp();
+    return;
+  }
+
+  if (artifactButton) {
+    artifactButton.textContent = "Preparing artifact...";
+    artifactButton.disabled = true;
+  }
+
+  setTimeout(() => {
+    try {
+      const W = 2400;
+      const H = 3200;
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      /* ── Pure white — breath ─────────────── */
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, W, H);
+
+      /* ── Bottom edge typography ──────────── */
+      const margin = 80;
+      const bottomY = H - margin;
+      const textColor = "rgba(0, 0, 0, 0.28)";
+      const fontSize = 18;
+
+      ctx.fillStyle = textColor;
+      ctx.textBaseline = "bottom";
+
+      /* Bottom left: hash */
+      const hash = generateHash();
+      ctx.textAlign = "left";
+      ctx.font = `300 ${fontSize}px Inter, 'Helvetica Neue', sans-serif`;
+      ctx.letterSpacing = "1px";
+      ctx.fillText(`#${hash}`, margin, bottomY);
+      ctx.letterSpacing = "0px";
+
+      /* Bottom center: Pneuma (1/1) */
+      ctx.textAlign = "center";
+      ctx.font = `italic 300 ${fontSize}px Georgia, 'Times New Roman', serif`;
+      ctx.fillText("Pneuma (1/1)", W / 2, bottomY);
+
+      /* Bottom right: Avery Lake */
+      ctx.textAlign = "right";
+      ctx.font = `300 ${fontSize}px Inter, 'Helvetica Neue', sans-serif`;
+      ctx.letterSpacing = "1px";
+      ctx.fillText("Avery Lake", W - margin, bottomY);
+      ctx.letterSpacing = "0px";
+
+      /* ── Download — mirrors The Logos path ─ */
+      const filename = `pneuma-${hash}.png`;
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resetArtifactButton();
+          showDownloadHelp();
+          return;
+        }
+
+        downloadBlob(blob, filename);
+        resetArtifactButton();
+      }, "image/png");
+    } catch {
+      resetArtifactButton();
+      showDownloadHelp();
+    }
+  }, 100);
+}
+
+/* ── Event listeners ─────────────────────── */
+
+releaseButton.addEventListener("click", releaseActiveMask);
+restartButton.addEventListener("click", restartExperiment);
+homeButton.addEventListener("click", restartExperiment);
+statementButton.addEventListener("click", () => artistStatement.showModal());
+artifactButton.addEventListener("click", generateArtifact);
+if (soundButton) {
+  soundButton.addEventListener("click", toggleSound);
+}
+copyExperienceLinkButton.addEventListener("click", copyExperienceLink);
+
+reflection.addEventListener("close", () => {
+  if (reflection.returnValue !== "release") {
+    activeMaskId = null;
+  }
+});
+
+reflection.addEventListener("click", (event) => {
+  const bounds = reflection.querySelector(".reflection__inner").getBoundingClientRect();
+  const clickedOutside =
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom;
+
+  if (clickedOutside) {
+    reflection.close("cancel");
+  }
+});
+
+artistStatement.addEventListener("click", (event) => {
+  const bounds = artistStatement.querySelector(".statement__inner").getBoundingClientRect();
+  const clickedOutside =
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom;
+
+  if (clickedOutside) {
+    artistStatement.close("cancel");
+  }
+});
+
+downloadHelp.addEventListener("click", (event) => {
+  const bounds = downloadHelp.querySelector(".download-help__inner").getBoundingClientRect();
+  const clickedOutside =
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom;
+
+  if (clickedOutside) {
+    downloadHelp.close("cancel");
+  }
+});
+
+/* ── Initialize ──────────────────────────── */
+
+createDustMotes();
+renderMasks();
+renderProgress();
+updateSoundButton();

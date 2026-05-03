@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pneuma | Avery Lake</title>
+    <meta
+      name="description"
+      content="Pneuma is an interactive Avery Lake experiment about releasing constructed identities and returning to breath."
+    >
+    <link rel="canonical" href="https://pneuma.averylakeofficial.com/">
+    <meta name="robots" content="index,follow">
+    <meta name="author" content="Avery Lake">
+    <meta
+      name="keywords"
+      content="Avery Lake, Pneuma, interactive art, digital art, identity, constructed identity, breath, consciousness, digital ritual, masks"
+    >
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Avery Lake">
+    <meta property="og:title" content="Pneuma | Avery Lake">
+    <meta
+      property="og:description"
+      content="A quiet interactive ritual about setting down the identities we inherit, perform, and protect. Return to breath."
+    >
+    <meta property="og:url" content="https://pneuma.averylakeofficial.com/">
+    <meta property="og:image" content="https://pneuma.averylakeofficial.com/assets/social-share-screenshot.png">
+    <meta property="og:image:secure_url" content="https://pneuma.averylakeofficial.com/assets/social-share-screenshot.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="White masks floating in a dark room with a soft breath-like mist for Pneuma by Avery Lake.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pneuma | Avery Lake">
+    <meta
+      name="twitter:description"
+      content="A quiet interactive ritual about setting down the identities we inherit, perform, and protect. Return to breath."
+    >
+    <meta name="twitter:image" content="https://pneuma.averylakeofficial.com/assets/social-share-screenshot.png">
+    <meta name="twitter:image:alt" content="White masks floating in a dark room with a soft breath-like mist for Pneuma by Avery Lake.">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="assets/favicon.png" type="image/png" sizes="64x64">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css?v=20260504-download-on-request">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": "Pneuma",
+        "url": "https://pneuma.averylakeofficial.com/",
+        "image": "https://pneuma.averylakeofficial.com/assets/social-share-screenshot.png",
+        "creator": {
+          "@type": "Person",
+          "name": "Avery Lake",
+          "url": "https://www.averylakeofficial.com/"
+        },
+        "description": "An interactive art experiment about releasing constructed identities: family, belief, nation, title, screen, language, and emotions.",
+        "genre": "Interactive digital art"
+      }
+    </script>
+  </head>
+  <body>
+    <main class="experience" aria-labelledby="page-title">
+      <h1 id="page-title" class="sr-only">Pneuma by Avery Lake</h1>
+
+      <header class="topbar" aria-label="Experience controls">
+        <button class="brand brand-button" id="home-button" type="button" aria-label="Restart Pneuma">
+          Pneuma
+        </button>
+        <button class="sound-toggle" id="sound-button" type="button" aria-label="Turn sound off" aria-pressed="true">
+          <span class="sound-toggle__track" aria-hidden="true">
+            <span class="sound-toggle__thumb"></span>
+          </span>
+          <span class="sr-only">Sound</span>
+        </button>
+      </header>
+      <audio id="soundtrack" src="assets/Pneuma.mp3" preload="none" loop></audio>
+
+      <div class="fog-container" id="fog-container" aria-hidden="true"></div>
+      <div class="room-stage" aria-hidden="true">
+        <div class="room-back"></div>
+        <div class="room-side room-side--left"></div>
+        <div class="room-side room-side--right"></div>
+        <div class="room-floor"></div>
+      </div>
+      <div class="room-light" aria-hidden="true">
+        <div class="room-light__back"></div>
+        <div class="room-light__side room-light__side--left"></div>
+        <div class="room-light__side room-light__side--right"></div>
+        <div class="room-light__floor"></div>
+      </div>
+      <div class="mist-overlay" aria-hidden="true">
+        <span class="mist-drift mist-drift--upper"></span>
+        <span class="mist-drift mist-drift--middle"></span>
+        <span class="mist-drift mist-drift--lower"></span>
+      </div>
+
+      <section class="mask-field" aria-label="Suspended identity masks">
+        <div class="mask-layer" id="mask-layer"></div>
+      </section>
+
+      <div class="progress" aria-hidden="true" id="progress-dots"></div>
+      <p class="progress-text sr-only" id="progress-text">0 of 7 identities released.</p>
+
+      <section class="reveal" aria-live="polite" aria-hidden="true">
+        <div class="reveal__mirror">
+          <div class="reveal__text">
+            <p><span>Breathe.</span></p>
+            <p><span>You are here.</span></p>
+            <p><span>Now.</span></p>
+            <p><span>The masks are gone.</span></p>
+            <p><span>Breathe.</span></p>
+          </div>
+        </div>
+      </section>
+
+      <dialog class="reflection" id="reflection">
+        <form method="dialog" class="reflection__inner">
+          <button class="reflection__close" value="cancel" aria-label="Close reflection" type="submit"></button>
+          <p class="reflection__kicker" id="reflection-kicker"></p>
+          <div class="reflection__copy" id="reflection-copy"></div>
+          <p class="reflection__question">Are you willing to set this down for a moment?</p>
+          <div class="reflection__actions">
+            <button class="button button--quiet" value="cancel" type="submit">Not yet</button>
+            <button class="button button--release" id="release-button" value="release" type="button">Let it go</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="statement" id="artist-statement">
+        <form method="dialog" class="statement__inner">
+          <button class="reflection__close" value="cancel" aria-label="Close artist statement" type="submit"></button>
+          <p class="reflection__kicker">Artist statement</p>
+          <div class="statement__copy">
+            <p>
+              Pneuma is an Avery Lake experiment in the identities we inherit, perform,
+              protect, and sometimes confuse with the self.
+            </p>
+            <p>
+              Family, belief, nation, title, screen, language, and emotions are not treated
+              as false or meaningless. They are treated as constructed.
+            </p>
+            <p>
+              The work asks what remains when each constructed self is set down for a moment:
+              breath, presence, here, now.
+            </p>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="download-help" id="download-help">
+        <form method="dialog" class="download-help__inner">
+          <button class="reflection__close" value="cancel" aria-label="Close download note" type="submit"></button>
+          <p class="reflection__kicker">Artifact</p>
+          <div class="download-help__copy">
+            <p>
+              The ritual works here. Only the final artifact download needs Safari, Chrome, or your system browser.
+            </p>
+            <p>
+              Copy the link, open it in your browser, complete the ritual there, and tap Download artifact again.
+            </p>
+          </div>
+          <div class="reflection__actions">
+            <button class="button button--release" id="copy-experience-link" type="button">Copy link</button>
+            <button class="button button--quiet" value="cancel" type="submit">I understand</button>
+          </div>
+          <p class="download-help__status" id="copy-link-status" aria-live="polite"></p>
+        </form>
+      </dialog>
+
+    </main>
+
+    <footer class="site-footer">
+      <a href="https://www.averylakeofficial.com/" target="_blank" rel="noopener noreferrer">
+        An Art of Avery Lake Experiment.
+      </a>
+      <button class="statement-link" id="statement-button" type="button">Artist statement</button>
+      <button class="statement-link reveal-only" id="artifact-button" type="button">Download artifact</button>
+      <a href="mailto:hello@averylakeofficial.com?subject=Pneuma%20signed%20edition%20inquiry&body=Hello%20Avery%20Lake%2C%0A%0AI%20would%20like%20to%20inquire%20about%20a%20signed%20edition%20of%20Pneuma.%0A" class="reveal-only">Inquire about signed edition</a>
+      <button class="statement-link reveal-only" id="restart-button" type="button">Restart</button>
+    </footer>
+
+    <script src="app.js?v=20260504-download-on-request" defer></script>
+  </body>
+</html>
